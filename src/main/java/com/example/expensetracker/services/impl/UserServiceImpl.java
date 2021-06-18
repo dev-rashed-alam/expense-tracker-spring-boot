@@ -18,8 +18,10 @@ public class UserServiceImpl implements UserService {
     UserRepositoryImpl userRepository;
 
     @Override
-    public User validUser(String emil, String password) throws EtAuthException {
-        return null;
+    public User validUser(String email, String password) throws EtAuthException {
+        if (email != null)
+            email = email.toLowerCase();
+        return userRepository.findByEmailAndPassword(email, password);
     }
 
     @Override

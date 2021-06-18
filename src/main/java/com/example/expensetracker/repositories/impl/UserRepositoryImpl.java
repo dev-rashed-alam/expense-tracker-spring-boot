@@ -4,6 +4,7 @@ import com.example.expensetracker.exceptions.EtAuthException;
 import com.example.expensetracker.models.User;
 import com.example.expensetracker.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -23,6 +24,8 @@ public class UserRepositoryImpl implements UserRepository {
 
     public static final String SQL_FIND_BY_ID = "select * from et_users where user_id = ?";
 
+    public static final String SQL_FIND_BY_EMAIL_AND_PASSWORD = "select * from et_users where email = ?";
+
     @Autowired
     JdbcTemplate jdbcTemplate;
 
@@ -40,24 +43,30 @@ public class UserRepositoryImpl implements UserRepository {
             }, keyHolder);
             return (Integer) Objects.requireNonNull(keyHolder.getKey()).intValue();
         } catch (Exception e) {
-            System.out.println(e);
             throw new EtAuthException("Invalid details. Failed to create account");
         }
     }
 
     @Override
     public User findByEmailAndPassword(String email, String password) throws EtAuthException {
-        return null;
+        try {
+            User user = jdbcTemplate.queryForObject(SQL_FIND_BY_EMAIL_AND_PASSWORD, userRowMapper, email);
+            if (!password.equals(user.getPassword()))
+                throw new EtAuthException("Invalid credentials");
+            return user;
+        } catch (EmptyResultDataAccessException e) {
+            throw new EtAuthException("Invalid credentials");
+        }
     }
 
     @Override
     public Integer getCountByEmail(String email) {
-        return jdbcTemplate.queryForObject(SQL_COUNT_BY_EMAIL, new Object[]{email}, Integer.class);
+        return jdbcTemplate.queryForObject(SQL_COUNT_BY_EMAIL, Integer.class, email);
     }
 
     @Override
     public User findById(Integer userId) {
-        return jdbcTemplate.queryForObject(SQL_FIND_BY_ID, new Object[]{userId}, userRowMapper);
+        return jdbcTemplate.queryForObject(SQL_FIND_BY_ID, userRowMapper, userId);
     }
 
     public RowMapper<User> userRowMapper = ((res, rowNum) ->

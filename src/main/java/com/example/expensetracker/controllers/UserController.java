@@ -28,4 +28,12 @@ public class UserController {
         User user = userService.registerUser(firstName, lastName, email, password);
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
+
+    @PostMapping("/login")
+    public ResponseEntity<User> login(@RequestBody Map<String,Object> userMap){
+        String email = (String) userMap.get("email");
+        String password = (String) userMap.get("password");
+        User user = userService.validUser(email,password);
+        return new ResponseEntity<>(user, HttpStatus.OK);
+    }
 }
