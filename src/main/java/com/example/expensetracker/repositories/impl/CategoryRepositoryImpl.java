@@ -19,7 +19,11 @@ import java.util.Objects;
 @Repository
 public class CategoryRepositoryImpl implements CategoryRepository {
 
+    private static final String SQL_UPDATE = "update et_categories set title = ?,description = ? where user_id = ? and category_id = ?";
+
     private static final String SQL_FIND_BY_ID = "select c.user_id,c.category_id,c.title,c.description,coalesce(sum(t.amount),0) total_expense from et_transactions t right outer join et_categories c on c.category_id = t.category_id where c.user_id = ? and c.category_id = ? group by category_id";
+
+    private static final String SQL_FIND_ALL = "select c.user_id,c.category_id,c.title,c.description,coalesce(sum(t.amount),0) total_expense from et_transactions t right outer join et_categories c on c.category_id = t.category_id where c.user_id = ? group by category_id";
 
     private static final String SQL_CREATE = "insert into et_categories (user_id,title,description) values (?,?,?)";
 
@@ -29,16 +33,14 @@ public class CategoryRepositoryImpl implements CategoryRepository {
 
     @Override
     public List<Category> findAll(int userId) throws EtResourceNotFoundException {
-        return null;
+        return jdbcTemplate.query(SQL_FIND_ALL, categoryRowMapper, userId);
     }
 
     @Override
     public Category findById(int userId, int categoryId) throws EtResourceNotFoundException {
         try {
-            System.out.println(userId + " " + categoryId);
             return jdbcTemplate.queryForObject(SQL_FIND_BY_ID, categoryRowMapper, userId, categoryId);
         } catch (Exception e) {
-            System.out.println(e);
             throw new EtResourceNotFoundException("Category not found!");
         }
     }
@@ -62,7 +64,11 @@ public class CategoryRepositoryImpl implements CategoryRepository {
 
     @Override
     public void update(int userId, int categoryId, Category category) throws EtBadRequestException {
-
+        try {
+            jdbcTemplate.update(SQL_UPDATE, category.getTitle(), category.getDescription(), userId, categoryId);
+        } catch (Exception e) {
+            throw new EtBadRequestException("Invalid Details!");
+        }
     }
 
     @Override
