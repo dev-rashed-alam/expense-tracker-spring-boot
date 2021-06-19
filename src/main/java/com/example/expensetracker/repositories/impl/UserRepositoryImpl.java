@@ -43,7 +43,7 @@ public class UserRepositoryImpl implements UserRepository {
                 ps.setString(4, hashedPassword);
                 return ps;
             }, keyHolder);
-            return (Integer) Objects.requireNonNull(keyHolder.getKey()).intValue();
+            return Objects.requireNonNull(keyHolder.getKey()).intValue();
         } catch (Exception e) {
             throw new EtAuthException("Invalid details. Failed to create account");
         }
