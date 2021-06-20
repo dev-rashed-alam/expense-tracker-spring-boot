@@ -23,13 +23,19 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 
     private static final String SQL_FIND_BY_ID = "select * from et_transactions where user_id = ? and category_id = ? and transaction_id = ?";
 
+    private static final String SQL_FIND_ALL = "select * from et_transactions where user_id = ? and category_id = ?";
+
+    private static final String SQL_UPDATE = "update et_transactions set amount = ?, note = ?, transaction_date = ? where user_id = ? and category_id = ? and transaction_id = ?";
+
+    private static final String SQL_REMOVE = "Delete from et_transactions where user_id = ? and category_id = ? and transaction_id = ?";
+
 
     @Autowired
     JdbcTemplate jdbcTemplate;
 
     @Override
     public List<Transaction> findAll(int userId, int categoryId) {
-        return null;
+        return jdbcTemplate.query(SQL_FIND_ALL, transactionRowMapper, userId, categoryId);
     }
 
     @Override
@@ -62,12 +68,18 @@ public class TransactionRepositoryImpl implements TransactionRepository {
 
     @Override
     public void update(int userId, int categoryId, int transactionId, Transaction transaction) throws EtBadRequestException {
-
+        try {
+            jdbcTemplate.update(SQL_UPDATE, transaction.getAmount(), transaction.getNote(), transaction.getTransactionDate(), userId, categoryId, transactionId);
+        } catch (Exception e) {
+            throw new EtBadRequestException("Invalid Details");
+        }
     }
 
     @Override
     public void removeById(int userId, int categoryId, int transactionId) throws EtResourceNotFoundException {
-
+        int count = jdbcTemplate.update(SQL_REMOVE, userId, categoryId, transactionId);
+        if (count == 0)
+            throw new EtResourceNotFoundException("Transaction not found!");
     }
 
     private RowMapper<Transaction> transactionRowMapper = ((res, rowNum) -> new Transaction(

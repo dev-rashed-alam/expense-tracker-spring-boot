@@ -27,6 +27,10 @@ public class CategoryRepositoryImpl implements CategoryRepository {
 
     private static final String SQL_CREATE = "insert into et_categories (user_id,title,description) values (?,?,?)";
 
+    private static final String SQL_REMOVE_TRANSACTION = "delete from et_transactions where user_id = ? and category_id = ?";
+
+    private static final String SQL_REMOVE_CATEGORY = "delete from et_categories where user_id =? and category_id = ?";
+
 
     @Autowired
     JdbcTemplate jdbcTemplate;
@@ -73,7 +77,12 @@ public class CategoryRepositoryImpl implements CategoryRepository {
 
     @Override
     public void removeById(int userId, int categoryId) throws EtResourceNotFoundException {
+        removeAllTransactionByCategory(userId, categoryId);
+        jdbcTemplate.update(SQL_REMOVE_CATEGORY, userId, categoryId);
+    }
 
+    private void removeAllTransactionByCategory(int userId, int categoryId) {
+        jdbcTemplate.update(SQL_REMOVE_TRANSACTION, userId, categoryId);
     }
 
     public RowMapper<Category> categoryRowMapper = ((res, rowNum) -> new Category(
